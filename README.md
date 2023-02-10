@@ -73,9 +73,7 @@ net.ipv4.tcp_timestamps = 1
 # net.netfilter.nf_conntrack_buckets value * 4
 net.netfilter.nf_conntrack_max = 2000000
 ```
-
 Optimize the network settings and performance for a system with:
-
 32 GB of RAM:
 ```
 net.ipv4.tcp_max_syn_backlog=16384
@@ -85,7 +83,6 @@ net.core.rmem_max = 33554432
 net.core.wmem_max = 33554432
 net.core.netdev_max_backlog = 15000
 ```
-
 64 GB of RAM:
 ```
 net.ipv4.tcp_max_syn_backlog = 32768
@@ -95,3 +92,16 @@ net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
 net.core.netdev_max_backlog = 30000
 ```
+Save and exit the file.
+Apply the changes by running:
+```
+sudo sysctl -p
+```
+And finally, run the last commands:
+```
+echo 2000000 > /sys/module/nf_conntrack/parameters/hashsize
+echo 0 > /proc/sys/net/netfilter/nf_conntrack_helper
+```
+The first command changes the size of the hash table used by the connection tracking system, which is responsible for tracking network connections in the Linux kernel. By setting the hashsize to 2000000, you are increasing the number of entries that the table can store, potentially improving performance in high-traffic network environments.
+
+The second command disables the use of connection tracking helpers, which are modules that assist in the handling of specific protocols (e.g., FTP, SIP, etc.). Disabling these helpers can reduce the memory overhead of the connection tracking system and improve performance. However, this may negatively impact the functionality of some protocols, so it's important to carefully evaluate the effects of this change in your specific use case.
