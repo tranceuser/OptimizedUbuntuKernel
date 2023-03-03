@@ -59,6 +59,12 @@ sudo sysctl -p
 
 The below optimizations aim to improve the performance of a Linux-based system by modifying various network settings. Some of the changes include increasing the maximum number of open file descriptors, increasing the maximum number of processes, enabling TCP time-wait reuse, adjusting TCP keepalive time, setting the local port range for TCP connections, and increasing the maximum number of allowed concurrent network connections. Additionally, the values for the system's network buffer sizes are also increased to improve network performance. The optimizations aim to improve the system's overall stability and responsiveness in handling high network traffic.
 
+Before running this script, please make sure that conntrack is installed on your system. If it is not installed, you can install it by running the following command:
+```
+sudo apt-get install conntrack -y
+```
+This will update your package lists and install the conntrack package, which is used to track and manipulate network connection states.
+
 General Optimization
 ```
 net.core.somaxconn = 65535
