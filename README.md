@@ -55,15 +55,17 @@ Save the file and reload the sysctl configuration:
 sudo sysctl -p
 ```
 
-## System Optimization
-
-The below optimizations aim to improve the performance of a Linux-based system by modifying various network settings. Some of the changes include increasing the maximum number of open file descriptors, increasing the maximum number of processes, enabling TCP time-wait reuse, adjusting TCP keepalive time, setting the local port range for TCP connections, and increasing the maximum number of allowed concurrent network connections. Additionally, the values for the system's network buffer sizes are also increased to improve network performance. The optimizations aim to improve the system's overall stability and responsiveness in handling high network traffic.
-
-Before running this script, please make sure that conntrack is installed on your system. If it is not installed, you can install it by running the following command:
+## Conntrack
+Before doing the below system optimizations, please make sure that conntrack is installed on your system.
+If it is not installed, you can install it by running the following command:
 ```
 sudo apt-get install conntrack -y
 ```
 This will update your package lists and install the conntrack package, which is used to track and manipulate network connection states.
+
+## System Optimization
+
+The below optimizations aim to improve the performance of a Linux-based system by modifying various network settings. Some of the changes include increasing the maximum number of open file descriptors, increasing the maximum number of processes, enabling TCP time-wait reuse, adjusting TCP keepalive time, setting the local port range for TCP connections, and increasing the maximum number of allowed concurrent network connections. Additionally, the values for the system's network buffer sizes are also increased to improve network performance. The optimizations aim to improve the system's overall stability and responsiveness in handling high network traffic.
 
 General Optimization
 ```
@@ -83,8 +85,8 @@ Optimize the network settings and performance for a system with:
 32 GB of RAM:
 ```
 net.ipv4.tcp_max_syn_backlog=16384
-net.ipv4.tcp_rmem = "4096 87380 33554432"
-net.ipv4.tcp_wmem = "4096 87380 33554432"
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 87380 33554432
 net.core.rmem_max = 33554432
 net.core.wmem_max = 33554432
 net.core.netdev_max_backlog = 15000
@@ -92,8 +94,8 @@ net.core.netdev_max_backlog = 15000
 64 GB of RAM:
 ```
 net.ipv4.tcp_max_syn_backlog = 32768
-net.ipv4.tcp_rmem = "4096 87380 67108864"
-net.ipv4.tcp_wmem = "4096 87380 67108864"
+net.ipv4.tcp_rmem = 4096 87380 67108864
+net.ipv4.tcp_wmem = 4096 87380 67108864
 net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
 net.core.netdev_max_backlog = 30000
@@ -103,11 +105,37 @@ Apply the changes by running:
 ```
 sudo sysctl -p
 ```
-And finally, run the last commands:
+## Conntrack
+You can also check the hashsize of Conntrack by using cat:
 ```
-echo 2000000 > /sys/module/nf_conntrack/parameters/hashsize
-echo 0 > /proc/sys/net/netfilter/nf_conntrack_helper
+cat /sys/module/nf_conntrack/parameters/hashsize
 ```
-The first command changes the size of the hash table used by the connection tracking system, which is responsible for tracking network connections in the Linux kernel. By setting the hashsize to 2000000, you are increasing the number of entries that the table can store, potentially improving performance in high-traffic network environments.
 
-The second command disables the use of connection tracking helpers, which are modules that assist in the handling of specific protocols (e.g., FTP, SIP, etc.). Disabling these helpers can reduce the memory overhead of the connection tracking system and improve performance. However, this may negatively impact the functionality of some protocols, so it's important to carefully evaluate the effects of this change in your specific use case.
+If the Conntrack hashsize value is still not set to 2000000 after following the steps I provided earlier, it's possible that there's another setting overriding the value you're trying to set.
+
+One possible solution is to create a systemd service that sets the Conntrack hashsize value at boot time. Here's how you can do this:
+1. Create a new file in the /etc/systemd/system directory called conntrack-hashsize.service:
+```
+sudo nano /etc/systemd/system/conntrack-hashsize.service
+```
+2. Add the following lines to the file:
+```
+[Unit]
+Description=Set Conntrack Hashsize Value
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "modprobe nf_conntrack && echo 2000000 > /sys/module/nf_conntrack/parameters/hashsize"
+
+[Install]
+WantedBy=multi-user.target
+```
+This defines a new systemd service that sets the Conntrack hashsize value to 2000000 at boot time.
+
+3. Save the file and close the editor.
+4. Enable the new service by running the following command:
+```
+sudo systemctl enable conntrack-hashsize.service
+```
+This will ensure that the new service is started automatically at boot time.
+Reboot the system.
