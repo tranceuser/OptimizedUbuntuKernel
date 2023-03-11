@@ -55,13 +55,9 @@ Save the file and reload the sysctl configuration:
 sudo sysctl -p
 ```
 
-## Conntrack
-Before doing the below system optimizations, please make sure that conntrack is installed on your system.
-If it is not installed, you can install it by running the following command:
-```
-sudo apt-get install conntrack -y
-```
-This will update your package lists and install the conntrack package, which is used to track and manipulate network connection states.
+## [Ubuntu Firewall Prerequisites](https://github.com/tranceuser/ubuntu_firewall_prerequisites)
+
+  Before moving forward with the below system optimizations, please make sure to check out my Ubuntu Firewall Prerequisites repository [here](https://github.com/tranceuser/ubuntu_firewall_prerequisites). This repository will guide you through the process of installing IPTables, Ipset, Conntrack, and netfilter-persistent, which are required for the system optimizations described below.
 
 ## System Optimization
 
