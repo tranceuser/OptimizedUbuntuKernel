@@ -62,8 +62,11 @@ sudo sysctl -p
 ## System Optimization
 
 The below optimizations aim to improve the performance of a Linux-based system by modifying various network settings. Some of the changes include increasing the maximum number of open file descriptors, increasing the maximum number of processes, enabling TCP time-wait reuse, adjusting TCP keepalive time, setting the local port range for TCP connections, and increasing the maximum number of allowed concurrent network connections. Additionally, the values for the system's network buffer sizes are also increased to improve network performance. The optimizations aim to improve the system's overall stability and responsiveness in handling high network traffic.
-
-General Optimization
+1. Open the /etc/sysctl.conf file for editing:
+```
+sudo nano /etc/sysctl.conf
+```
+2. General Optimization
 ```
 net.core.somaxconn = 65535
 net.ipv4.tcp_tw_reuse = 1
@@ -72,32 +75,43 @@ net.ipv4.tcp_keepalive_time = 1200
 net.ipv4.ip_local_port_range = 1024 65000
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_synack_retries = 2
-net.netfilter.nf_conntrack_tcp_loose = 0 
 net.ipv4.tcp_timestamps = 1
-# net.netfilter.nf_conntrack_buckets value * 4
+net.netfilter.nf_conntrack_tcp_loose = 0 
 net.netfilter.nf_conntrack_max = 2000000
+net.nf_conntrack_max = 2000000
+# = (2 * 2000000) / 4 = 1000000
+net.netfilter.nf_conntrack_buckets = 1000000
 ```
-Optimize the network settings and performance for a system with:
+3. Optimize the network settings and performance for a system with:
+16 GB of RAM:
+```
+net.ipv4.tcp_max_syn_backlog = 32768
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 87380 16777216
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.netdev_max_backlog = 30000
+```
 32 GB of RAM:
 ```
-net.ipv4.tcp_max_syn_backlog=16384
+net.ipv4.tcp_max_syn_backlog = 65536
 net.ipv4.tcp_rmem = 4096 87380 33554432
 net.ipv4.tcp_wmem = 4096 87380 33554432
 net.core.rmem_max = 33554432
 net.core.wmem_max = 33554432
-net.core.netdev_max_backlog = 15000
+net.core.netdev_max_backlog = 30000
 ```
 64 GB of RAM:
 ```
-net.ipv4.tcp_max_syn_backlog = 32768
+net.ipv4.tcp_max_syn_backlog = 131072
 net.ipv4.tcp_rmem = 4096 87380 67108864
 net.ipv4.tcp_wmem = 4096 87380 67108864
 net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
-net.core.netdev_max_backlog = 30000
+net.core.netdev_max_backlog = 50000
 ```
-Save and exit the file.
-Apply the changes by running:
+4. Save and exit the file.
+5. Apply the changes by running:
 ```
 sudo sysctl -p
 ```
@@ -107,7 +121,11 @@ You can also check the hashsize of Conntrack by using cat:
 cat /sys/module/nf_conntrack/parameters/hashsize
 ```
 
-If the Conntrack hashsize value is still not set to 2000000 after following the steps I provided earlier, it's possible that there's another setting overriding the value you're trying to set.
+Hashsize value is determined dynamically based on the amount of memory available on the system. However, you can force the hashsize value to a specific value.
+
+
+
+If the Conntrack hashsize value is still not set to 1000000 after following the steps I provided earlier, it's possible that there's another setting overriding the value you're trying to set.
 
 One possible solution is to create a systemd service that sets the Conntrack hashsize value at boot time. Here's how you can do this:
 1. Create a new file in the /etc/systemd/system directory called conntrack-hashsize.service:
@@ -121,12 +139,12 @@ Description=Set Conntrack Hashsize Value
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "modprobe nf_conntrack && echo 2000000 > /sys/module/nf_conntrack/parameters/hashsize"
+ExecStart=/bin/bash -c "modprobe nf_conntrack && echo 1000000 > /sys/module/nf_conntrack/parameters/hashsize"
 
 [Install]
 WantedBy=multi-user.target
 ```
-This defines a new systemd service that sets the Conntrack hashsize value to 2000000 at boot time.
+This defines a new systemd service that sets the Conntrack hashsize value to 1000000 at boot time.
 
 3. Save the file and close the editor.
 4. Enable the new service by running the following command:
