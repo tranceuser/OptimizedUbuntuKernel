@@ -68,7 +68,9 @@ sudo nano /etc/sysctl.conf
 ```
 2. General Optimization
 ```
+# Increase the TCP backlog limit
 net.core.somaxconn = 65535
+# Enable socket reuse for TIME_WAIT sockets
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 30
 net.ipv4.tcp_keepalive_time = 1200
@@ -76,39 +78,42 @@ net.ipv4.ip_local_port_range = 1024 65000
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_synack_retries = 2
 net.ipv4.tcp_timestamps = 1
-net.netfilter.nf_conntrack_tcp_loose = 0 
-net.netfilter.nf_conntrack_max = 2000000
-net.nf_conntrack_max = 2000000
-# = (2 * 2000000) / 4 = 1000000
-net.netfilter.nf_conntrack_buckets = 1000000
+net.netfilter.nf_conntrack_tcp_loose = 0
+# Increase the maximum size of the listen queue
+net.ipv4.tcp_max_syn_backlog = 65535
+# Increase the maximum input queue size
+net.core.netdev_max_backlog = 65535
+# Increase the maximum number of conntrack entries
+net.netfilter.nf_conntrack_max = 1048576
+net.nf_conntrack_max = 1048576
+# Increase the number of conntrack buckets
+net.netfilter.nf_conntrack_buckets = 4194304
+# Increase the maximum number of file descriptors
+fs.file-max = 4194304
+# Increase the maximum number of open files for all users and processes.
+* hard nofile 4194304
 ```
 3. Optimize the network settings and performance for a system with:
 16 GB of RAM:
 ```
-net.ipv4.tcp_max_syn_backlog = 32768
 net.ipv4.tcp_rmem = 4096 87380 16777216
 net.ipv4.tcp_wmem = 4096 87380 16777216
 net.core.rmem_max = 16777216
 net.core.wmem_max = 16777216
-net.core.netdev_max_backlog = 30000
 ```
 32 GB of RAM:
 ```
-net.ipv4.tcp_max_syn_backlog = 65536
 net.ipv4.tcp_rmem = 4096 87380 33554432
 net.ipv4.tcp_wmem = 4096 87380 33554432
 net.core.rmem_max = 33554432
 net.core.wmem_max = 33554432
-net.core.netdev_max_backlog = 30000
 ```
 64 GB of RAM:
 ```
-net.ipv4.tcp_max_syn_backlog = 131072
 net.ipv4.tcp_rmem = 4096 87380 67108864
 net.ipv4.tcp_wmem = 4096 87380 67108864
 net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
-net.core.netdev_max_backlog = 50000
 ```
 4. Save and exit the file.
 5. Apply the changes by running:
