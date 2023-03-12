@@ -68,9 +68,7 @@ sudo nano /etc/sysctl.conf
 ```
 2. General Optimization
 ```
-# Increase the TCP backlog limit
 net.core.somaxconn = 65535
-# Enable socket reuse for TIME_WAIT sockets
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 30
 net.ipv4.tcp_keepalive_time = 1200
@@ -79,19 +77,11 @@ net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_synack_retries = 2
 net.ipv4.tcp_timestamps = 1
 net.netfilter.nf_conntrack_tcp_loose = 0
-# Increase the maximum size of the listen queue
 net.ipv4.tcp_max_syn_backlog = 65535
-# Increase the maximum input queue size
 net.core.netdev_max_backlog = 65535
-# Increase the maximum number of conntrack entries
 net.netfilter.nf_conntrack_max = 1048576
 net.nf_conntrack_max = 1048576
-# Increase the number of conntrack buckets
 net.netfilter.nf_conntrack_buckets = 4194304
-# Increase the maximum number of file descriptors
-fs.file-max = 4194304
-# Increase the maximum number of open files for all users and processes.
-* hard nofile 4194304
 ```
 3. Optimize the network settings and performance for a system with:
 16 GB of RAM:
@@ -120,17 +110,30 @@ net.core.wmem_max = 67108864
 ```
 sudo sysctl -p
 ```
+## Maximum number of open files
+The nofile parameter sets the maximum number of open files that can be used by a process. In some cases, a high number of open files may be required by certain applications, especially those that handle large amounts of data or perform heavy I/O operations.
+1. Open the /etc/security/limits.conf file with a text editor using the following command:
+```
+sudo nano /etc/security/limits.conf
+```
+2. Add the following lines to the end of the file to set the nofile parameter:
+```
+* hard nofile 4194304
+* soft nofile 4194304
+```
+This sets the maximum number of open files to 4194304 for all users.
+To apply the changes, you need to log out and log back in, or you can restart your system using the following command:
+```
+sudo reboot
+```
 ## Conntrack
 You can also check the hashsize of Conntrack by using cat:
 ```
 cat /sys/module/nf_conntrack/parameters/hashsize
 ```
-
 Hashsize value is determined dynamically based on the amount of memory available on the system. However, you can force the hashsize value to a specific value.
 
-
-
-If the Conntrack hashsize value is still not set to 1000000 after following the steps I provided earlier, it's possible that there's another setting overriding the value you're trying to set.
+If the Conntrack hashsize value is still not set to 1048576 after following the steps I provided earlier, it's possible that there's another setting overriding the value you're trying to set.
 
 One possible solution is to create a systemd service that sets the Conntrack hashsize value at boot time. Here's how you can do this:
 1. Create a new file in the /etc/systemd/system directory called conntrack-hashsize.service:
@@ -144,12 +147,12 @@ Description=Set Conntrack Hashsize Value
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c "modprobe nf_conntrack && echo 1000000 > /sys/module/nf_conntrack/parameters/hashsize"
+ExecStart=/bin/bash -c "modprobe nf_conntrack && echo 1048576 > /sys/module/nf_conntrack/parameters/hashsize"
 
 [Install]
 WantedBy=multi-user.target
 ```
-This defines a new systemd service that sets the Conntrack hashsize value to 1000000 at boot time.
+This defines a new systemd service that sets the Conntrack hashsize value to 1048576 at boot time.
 
 3. Save the file and close the editor.
 4. Enable the new service by running the following command:
